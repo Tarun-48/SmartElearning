@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart E-Learning</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Welcome to Smart E-Learning Exam System</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/register">Register</a>
+            <a href="/login">Login</a>
+        </nav>
+
+        {% if g.user %}
+        <p>Logged in as: {{ g.user.fullname }} | <a href="{{ url_for('logout') }}">Logout</a></p>
+        {% endif %}
+
+    </header>
+
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="messages">
+          {% for category, msg in messages %}
+            <div class="flash {{ category }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    
+
+    <main>
+        <section>
+            <h2>Learn, Practice, and Test Yourself</h2>
+            <p>Our Smart E-Learning platform lets students take online exams and view their results instantly.</p>
+            <a href="/register" class="btn">Get Started</a>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2025 Smart E-Learning System</p>
+    </footer>
+</body>
+</html>

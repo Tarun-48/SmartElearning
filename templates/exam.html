@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take Exam - Smart E-Learning</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Online Exam</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/result">View Results</a>
+        </nav>
+    </header>
+
+    <main>
+        <form action="/submit_exam" method="POST" class="exam-box">
+            <h3>1. What is the capital of India?</h3>
+            <input type="radio" name="q1" value="Delhi"> Delhi<br>
+            <input type="radio" name="q1" value="Mumbai"> Mumbai<br>
+            <input type="radio" name="q1" value="Kolkata"> Kolkata<br>
+
+            <h3>2. Which language is used in Flask framework?</h3>
+            <input type="radio" name="q2" value="Python"> Python<br>
+            <input type="radio" name="q2" value="Java"> Java<br>
+            <input type="radio" name="q2" value="PHP"> PHP<br>
+
+            <button type="submit" class="btn">Submit Exam</button>
+        </form>
+    </main>
+
+    <footer>
+        <p>Good luck! You can review your results afterward.</p>
+    </footer>
+</body>
+</html>

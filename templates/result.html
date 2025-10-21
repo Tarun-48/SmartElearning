@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Result - Smart E-Learning</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Exam Results</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/exam">Take Another Exam</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="result-box">
+            <h2>Congratulations!</h2>
+            <p>Your Score: <strong>{{ score }}</strong> / 2</p>
+            <p>Keep practicing and improve your skills!</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2025 Smart E-Learning System</p>
+    </footer>
+</body>
+</html>
