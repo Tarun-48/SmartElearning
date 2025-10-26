@@ -90,10 +90,10 @@ def login():
             # login success
             session.clear()
             session['user_id'] = user.id
-            flash(f"Welcome back, {user.fullname}!", "success")
+            flash(f"Welcome, {user.fullname}!", "success")
             return redirect(url_for('home'))
         else:
-            flash("Invalid email or password.", "danger")
+            flash("Invalid email or password.", "error")
             return redirect(url_for('login'))
 
     return render_template('login.html')

@@ -16,7 +16,7 @@
         </nav>
 
         {% if g.user %}
-        <p>Logged in as: {{ g.user.fullname }} | <a href="{{ url_for('logout') }}">Logout</a></p>
+        <p>Logged in as: {{ g.user.fullname }} |<a href="{{ url_for('logout') }}">Logout</a></p>
         {% endif %}
 
     </header>
@@ -37,7 +37,11 @@
         <section>
             <h2>Learn, Practice, and Test Yourself</h2>
             <p>Our Smart E-Learning platform lets students take online exams and view their results instantly.</p>
-            <a href="/register" class="btn">Get Started</a>
+            <a href="{{ url_for('exam') }}">
+            <button style="background-color:#007bff; color:white; padding:10px 20px; border:none; border-radius:5px;">
+              Take Exam
+            </button>
+            </a>
         </section>
     </main>
 
