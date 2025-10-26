@@ -1,85 +1,133 @@
+/* Base Styles */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f9f9fb;
+    font-family: 'Roboto', Arial, sans-serif;
+    background-color: #f5f6fa; /* light, neutral background */
     margin: 0;
     padding: 0;
+    color: #2c3e50;
     text-align: center;
 }
 
+/* Header */
 header {
-    background-color: #0078d7;
-    color: white;
-    padding: 15px;
+    background-color: #34495e; /* dark professional blue-gray */
+    color: #ecf0f1;
+    padding: 20px 0;
+    font-size: 1.8em;
+    font-weight: 500;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
+/* Navigation Links */
 nav a {
-    color: white;
+    color: #ecf0f1;
     text-decoration: none;
-    margin: 0 10px;
+    margin: 0 15px;
+    font-weight: 500;
+    transition: color 0.3s ease;
 }
 
 nav a:hover {
+    color: #1abc9c; /* teal accent */
     text-decoration: underline;
 }
 
+/* Card Boxes (Forms, Exams, Results) */
 .form-box, .exam-box, .result-box {
-    background: white;
-    padding: 20px;
-    margin: 40px auto;
+    background: #ffffff;
+    padding: 30px 35px;
+    margin: 50px auto;
     width: 90%;
-    max-width: 400px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    max-width: 500px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08); /* material shadow */
     text-align: left;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
 }
 
+.form-box:hover, .exam-box:hover, .result-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+}
+
+/* Labels & Inputs */
 label {
     display: block;
-    margin-top: 10px;
+    margin-top: 15px;
+    font-weight: 500;
+    font-size: 0.95em;
 }
 
 input[type="text"], input[type="email"], input[type="password"] {
     width: 100%;
-    padding: 8px;
+    padding: 12px;
     margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid #bdc3c7;
+    border-radius: 6px;
+    font-size: 0.95em;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus {
+    border-color: #1abc9c;
+    box-shadow: 0 0 8px rgba(26, 188, 156, 0.3);
+    outline: none;
+}
+
+/* Buttons */
 .btn {
-    background-color: #0078d7;
-    color: white;
+    background-color: #1abc9c;
+    color: #ffffff;
     border: none;
-    padding: 10px 15px;
-    border-radius: 5px;
-    margin-top: 15px;
+    padding: 14px 25px;
+    border-radius: 8px;
+    margin-top: 20px;
     cursor: pointer;
+    font-weight: 500;
+    font-size: 1em;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
     display: inline-block;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
 }
 
 .btn:hover {
-    background-color: #005fa3;
+    background-color: #16a085;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
 }
 
+/* Footer */
 footer {
-    background-color: #eee;
-    padding: 10px;
-    margin-top: 20px;
+    background-color: #ecf0f1;
+    padding: 20px 0;
+    margin-top: 40px;
+    font-size: 0.9em;
+    color: #7f8c8d;
 }
 
+/* Flash Messages */
 .messages {
-    margin: 10px auto;
+    margin: 20px auto;
     max-width: 600px;
 }
 
 .flash {
-    padding: 10px;
-    border-radius: 5px;
-    margin-bottom: 10px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
     text-align: center;
+    font-weight: 500;
+    font-size: 0.95em;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease;
 }
 
-.flash.success { background-color: #d4edda; color: #155724; }
-.flash.warning { background-color: #fff3cd; color: #856404; }
-.flash.danger { background-color: #f8d7da; color: #721c24; }
-.flash.info { background-color: #cce5ff; color: #004085; }
+.flash.success { background-color: #e8f6f3; color: #1abc9c; }
+.flash.warning { background-color: #fff8e1; color: #f39c12; }
+.flash.danger { background-color: #fdecea; color: #e74c3c; }
+.flash.info { background-color: #e3f2fd; color: #3498db; }
+
+.flash:hover {
+    transform: translateY(-2px);
+}
