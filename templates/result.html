@@ -15,13 +15,9 @@
         </nav>
     </header>
 
-    <main>
-        <section class="result-box">
-            <h2>Congratulations!</h2>
-            <p>Your Score: <strong>{{ score }}</strong> / 2</p>
-            <p>Keep practicing and improve your skills!</p>
-        </section>
-    </main>
+    <h2>Exam Result</h2>
+    <p>You scored {{ session.get('last_score', 0) }} out of {{ session.get('last_total', 0) }}</p>
+    <a href="{{ url_for('home') }}">Back to Home</a>
 
     <footer>
         <p>© 2025 Smart E-Learning System</p>

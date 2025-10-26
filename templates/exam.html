@@ -8,6 +8,8 @@
 </head>
 <body>
     <h2>{{ exam.title }}</h2>
+    <p>{{ exam.description }}</p>
+    
     <form method="POST">
         {% for q in questions %}
             <p><b>{{ loop.index }}. {{ q.question_text }}</b></p>
