@@ -11,17 +11,23 @@
         <h1>Welcome to Smart E-Learning Exam System</h1>
         <nav>
             <a href="/">Home</a>
-            <a href="/register">Register</a>
-            <a href="/login">Login</a>
+
+            {% if not g.user %}  <!-- Show these only if NOT logged in -->
+                <a href="/register">Register</a>
+                <a href="/login">Login</a>
+            {% else %}  <!-- Show these if logged in -->
+                <a href="{{ url_for('exam') }}">Take Exam</a>
+                <a href="{{ url_for('result') }}">View Results</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% endif %}
         </nav>
 
         {% if g.user %}
-        <p>Logged in as: {{ g.user.fullname }} |<a href="{{ url_for('logout') }}">Logout</a></p>
+        <p>Logged in as: <strong>{{ g.user.fullname }}</strong></p>
         {% endif %}
-
     </header>
 
-    
+    <!-- Flash messages section -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="messages">
@@ -31,17 +37,23 @@
         </div>
       {% endif %}
     {% endwith %}
-    
 
     <main>
         <section>
             <h2>Learn, Practice, and Test Yourself</h2>
             <p>Our Smart E-Learning platform lets students take online exams and view their results instantly.</p>
-            <a href="{{ url_for('exam') }}">
-            <button style="background-color:#007bff; color:white; padding:10px 20px; border:none; border-radius:5px;">
-              Take Exam
-            </button>
-            </a>
+
+            {% if g.user %}
+              <!-- Only show Take Exam button if logged in -->
+              <a href="{{ url_for('exam') }}">
+                <button style="background-color:#007bff; color:white; padding:10px 20px; border:none; border-radius:5px;">
+                  Take Exam
+                </button>
+              </a>
+            {% else %}
+              <!-- Encourage user to log in -->
+              <p><a href="{{ url_for('login') }}">Login</a> or <a href="{{ url_for('register') }}">Register</a> to start your exams!</p>
+            {% endif %}
         </section>
     </main>
 

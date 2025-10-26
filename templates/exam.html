@@ -7,29 +7,17 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header>
-        <h1>Online Exam</h1>
-        <nav>
-            <a href="/">Home</a>
-            <a href="/result">View Results</a>
-        </nav>
-    </header>
-
-    <main>
-        <form action="/submit_exam" method="POST" class="exam-box">
-            <h3>1. What is the capital of India?</h3>
-            <input type="radio" name="q1" value="Delhi"> Delhi<br>
-            <input type="radio" name="q1" value="Mumbai"> Mumbai<br>
-            <input type="radio" name="q1" value="Kolkata"> Kolkata<br>
-
-            <h3>2. Which language is used in Flask framework?</h3>
-            <input type="radio" name="q2" value="Python"> Python<br>
-            <input type="radio" name="q2" value="Java"> Java<br>
-            <input type="radio" name="q2" value="PHP"> PHP<br>
-
-            <button type="submit" class="btn">Submit Exam</button>
-        </form>
-    </main>
+    <h2>{{ exam.title }}</h2>
+    <form method="POST">
+        {% for q in questions %}
+            <p><b>{{ loop.index }}. {{ q.question_text }}</b></p>
+            <input type="radio" name="{{ q.id }}" value="{{ q.option1 }}"> {{ q.option1 }}<br>
+            <input type="radio" name="{{ q.id }}" value="{{ q.option2 }}"> {{ q.option2 }}<br>
+            <input type="radio" name="{{ q.id }}" value="{{ q.option3 }}"> {{ q.option3 }}<br>
+            <input type="radio" name="{{ q.id }}" value="{{ q.option4 }}"> {{ q.option4 }}<br><br>
+        {% endfor %}
+        <button type="submit">Submit Exam</button>
+    </form>
 
     <footer>
         <p>Good luck! You can review your results afterward.</p>

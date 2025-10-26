@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add Question</title>
+</head>
+<body>
+  <h2>Add Question to {{ exam.title }}</h2>
+  <form method="POST">
+    <label>Question:</label><br>
+    <textarea name="question_text" required></textarea><br><br>
+
+    <label>Option 1:</label><br>
+    <input type="text" name="option1" required><br><br>
+    <label>Option 2:</label><br>
+    <input type="text" name="option2" required><br><br>
+    <label>Option 3:</label><br>
+    <input type="text" name="option3" required><br><br>
+    <label>Option 4:</label><br>
+    <input type="text" name="option4" required><br><br>
+
+    <label>Correct Option (write the exact correct answer):</label><br>
+    <input type="text" name="correct_option" required><br><br>
+
+    <button type="submit">Add Question</button>
+  </form>
+</body>
+</html>

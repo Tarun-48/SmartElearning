@@ -29,6 +29,24 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+# ---------- Exam Models ----------
+class Exam(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.String(300))
+    questions = db.relationship('Question', backref='exam', lazy=True)
+
+class Question(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    exam_id = db.Column(db.Integer, db.ForeignKey('exam.id'), nullable=False)
+    question_text = db.Column(db.String(500), nullable=False)
+    option1 = db.Column(db.String(200), nullable=False)
+    option2 = db.Column(db.String(200), nullable=False)
+    option3 = db.Column(db.String(200), nullable=False)
+    option4 = db.Column(db.String(200), nullable=False)
+    correct_option = db.Column(db.String(200), nullable=False)
+
+
 # ---------- helpers ----------
 def login_required(f):
     @wraps(f)
@@ -108,8 +126,65 @@ def logout():
 @app.route('/exam')
 @login_required
 def exam():
-    # you can render exam.html (we kept exam.html earlier); it will have access to g.user
-    return render_template('exam.html')
+    # Dummy data until we build database model
+    exam = {
+        "title": "Sample Exam",
+        "description": "This is a test exam for demonstration."
+    }
+    return render_template('exam.html', exam=exam)
+
+# ---------- Admin: Add Exam ----------
+@app.route('/add_exam', methods=['GET', 'POST'])
+@login_required
+def add_exam():
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        desc = request.form.get('description', '').strip()
+        if not title:
+            flash("Exam title is required.", "danger")
+            return redirect(url_for('add_exam'))
+
+        new_exam = Exam(title=title, description=desc)
+        db.session.add(new_exam)
+        db.session.commit()
+        flash("Exam added successfully! Now add questions.", "success")
+        return redirect(url_for('add_question', exam_id=new_exam.id))
+
+    return render_template('add_exam.html')
+
+
+# ---------- Admin: Add Questions ----------
+@app.route('/add_question/<int:exam_id>', methods=['GET', 'POST'])
+@login_required
+def add_question(exam_id):
+    exam = Exam.query.get_or_404(exam_id)
+    if request.method == 'POST':
+        q_text = request.form.get('question_text')
+        o1 = request.form.get('option1')
+        o2 = request.form.get('option2')
+        o3 = request.form.get('option3')
+        o4 = request.form.get('option4')
+        correct = request.form.get('correct_option')
+
+        if not all([q_text, o1, o2, o3, o4, correct]):
+            flash("Please fill all fields!", "warning")
+            return redirect(url_for('add_question', exam_id=exam.id))
+
+        q = Question(
+            exam_id=exam.id,
+            question_text=q_text,
+            option1=o1,
+            option2=o2,
+            option3=o3,
+            option4=o4,
+            correct_option=correct
+        )
+        db.session.add(q)
+        db.session.commit()
+        flash("Question added successfully!", "success")
+        return redirect(url_for('add_question', exam_id=exam.id))
+
+    return render_template('add_question.html', exam=exam)
 
 # Example result route (protected)
 @app.route('/result')
@@ -118,6 +193,7 @@ def result():
     # pass dummy score for now; later you'll compute real score
     score = session.get('last_score', None)
     return render_template('result.html', score=score if score is not None else 0)
+
 
 # Utility to create the DB (run manually once)
 @app.cli.command("init-db")
