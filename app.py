@@ -4,6 +4,21 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import os
+from dotenv import load_dotenv
+from openai import OpenAI
+
+# --- Load environment variables first ---
+load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+if not OPENAI_API_KEY:
+    raise RuntimeError("❌ OPENAI_API_KEY not found in .env")
+
+# --- Initialize OpenAI client ---
+client = OpenAI(api_key=OPENAI_API_KEY)
+
+
+
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -150,6 +165,43 @@ def exam():
     flash("No exams available yet.", "info")
     return redirect(url_for('home'))
 
+
+@app.route('/chat')
+@login_required
+def chat():
+    return render_template('chat.html')
+
+@app.route('/chatbot', methods=['POST'])
+@login_required
+def chatbot():
+    from flask import request, jsonify
+    user_input = request.json.get('message', '').strip()
+
+    if not user_input:
+        return jsonify({"reply": "Please type a message."})
+
+    try:
+        # Use GPT API with new OpenAI client
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are SmartBot, a helpful AI tutor for Smart E-Learning. You assist students with exams, registration, and study guidance in a friendly, clear manner."},
+                {"role": "user", "content": user_input}
+            ],
+            max_tokens=250,
+            temperature=0.7
+        )
+
+        bot_reply = response.choices[0].message.content.strip()
+        return jsonify({"reply": bot_reply})
+
+    except Exception as e:
+        print("OpenAI API Error:", e)
+        return jsonify({"reply": "⚠️ Sorry, I'm having trouble connecting to SmartBot’s brain right now."})
+
+
+
+
 # ---------- Admin: Add Exam ----------
 @app.route('/add_exam', methods=['GET', 'POST'])
 @admin_required
@@ -277,6 +329,7 @@ def create_admin():
     db.session.add(admin)
     db.session.commit()
     print(f"Admin user '{fullname}' created successfully!")
+
 
 
 

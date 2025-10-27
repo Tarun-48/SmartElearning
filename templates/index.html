@@ -21,6 +21,9 @@
                 {% endif %}
                 <a href="{{ url_for('logout') }}">Logout</a>
             {% endif %}
+            
+            
+            <a href="{{ url_for('chat') }}">Chat with SmartBot 🤖</a>
         </nav>
 
         {% if g.user %}
