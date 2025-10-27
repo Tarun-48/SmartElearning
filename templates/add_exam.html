@@ -1,16 +1,66 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Add Exam</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Exam - Smart E-Learning</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <h2>Add New Exam</h2>
-  <form method="POST">
-    <label>Title:</label><br>
-    <input type="text" name="title" required><br><br>
-    <label>Description (optional):</label><br>
-    <textarea name="description"></textarea><br><br>
-    <button type="submit">Create Exam</button>
-  </form>
+
+    <!-- Header -->
+    <header>
+        <h1>Smart E-Learning Exam System</h1>
+        <nav>
+            <a href="{{ url_for('home') }}">Home</a>
+            {% if not g.user %}
+                <a href="{{ url_for('register') }}">Register</a>
+                <a href="{{ url_for('login') }}">Login</a>
+            {% else %}
+                {% if g.user.is_admin %}
+                    <a href="{{ url_for('add_exam') }}">Add Exam</a>
+                {% endif %}
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% endif %}
+            <a href="{{ url_for('chat') }}">Chat with SmartBot 🤖</a>
+        </nav>
+
+        {% if g.user %}
+        <p>Logged in as: <strong>{{ g.user.fullname }}</strong></p>
+        {% endif %}
+    </header>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="messages">
+          {% for category, msg in messages %}
+            <div class="flash {{ category }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Main Section -->
+    <main>
+        <div class="form-box">
+            <h2>Add New Exam</h2>
+            <form method="POST" action="{{ url_for('add_exam') }}">
+                <label for="title">Exam Title:</label>
+                <input type="text" id="title" name="title" placeholder="Enter exam title" required>
+
+                <label for="description">Description (optional):</label>
+                <textarea id="description" name="description" placeholder="Enter short description..." rows="4"></textarea>
+
+                <button type="submit" class="btn">Create Exam</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2025 Smart E-Learning System | Empowering Smarter Exams</p>
+    </footer>
+
 </body>
 </html>

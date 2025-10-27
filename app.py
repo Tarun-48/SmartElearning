@@ -1,11 +1,14 @@
-# app.py
-from flask import Flask, render_template, request, redirect, url_for, flash, session, g
+# app.py  
+from flask import Flask, render_template, request, redirect, url_for, flash, session, g, jsonify, make_response, Response
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+from datetime import datetime
+import csv
+from io import StringIO
 
 # --- Load environment variables first ---
 load_dotenv()
@@ -17,15 +20,10 @@ if not OPENAI_API_KEY:
 # --- Initialize OpenAI client ---
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-
-
-
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-# SECRET KEY (change to a random strong key for production)
 app.config['SECRET_KEY'] = 'change-this-to-a-random-secret-key'
-# SQLite DB file
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'smart_elearning.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -45,12 +43,13 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-# ---------- Exam Models ----------
+
 class Exam(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     description = db.Column(db.String(300))
     questions = db.relationship('Question', backref='exam', lazy=True)
+
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -62,11 +61,13 @@ class Question(db.Model):
     option4 = db.Column(db.String(200), nullable=False)
     correct_option = db.Column(db.String(200), nullable=False)
 
+
 class Result(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     exam_id = db.Column(db.Integer, db.ForeignKey('exam.id'), nullable=False)
     score = db.Column(db.Integer, nullable=False)
+    date_taken = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 # ---------- helpers ----------
@@ -79,6 +80,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -88,18 +90,20 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# run before requests to load user object
+
 @app.before_request
 def load_logged_in_user():
     g.user = None
     if 'user_id' in session:
         g.user = User.query.get(session['user_id'])
 
+
 # ---------- Routes ----------
 @app.route('/')
 def home():
     exams = Exam.query.all()
-    return render_template('index.html',exams=exams)
+    return render_template('index.html', exams=exams)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -112,13 +116,11 @@ def register():
             flash("Please fill out all fields.", "danger")
             return redirect(url_for('register'))
 
-        # check if user exists
         existing = User.query.filter_by(email=email).first()
         if existing:
             flash("An account with that email already exists. Please log in.", "warning")
             return redirect(url_for('login'))
 
-        # create user
         user = User(fullname=fullname, email=email)
         user.set_password(password)
         db.session.add(user)
@@ -129,6 +131,7 @@ def register():
 
     return render_template('register.html')
 
+
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
@@ -137,7 +140,6 @@ def login():
 
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password):
-            # login success
             session.clear()
             session['user_id'] = user.id
             flash(f"Welcome, {user.fullname}!", "success")
@@ -148,17 +150,17 @@ def login():
 
     return render_template('login.html')
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     flash("You have been logged out.", "info")
     return redirect(url_for('home'))
 
-# protected example route
+
 @app.route('/exam')
 @login_required
 def exam():
-    # redirect to exam list or first exam
     exams = Exam.query.all()
     if exams:
         return redirect(url_for('take_exam', exam_id=exams[0].id))
@@ -166,40 +168,43 @@ def exam():
     return redirect(url_for('home'))
 
 
+@app.route('/exam_list')
+@login_required
+def exam_list():
+    exams = Exam.query.all()
+    taken_exam_ids = [r.exam_id for r in Result.query.filter_by(user_id=g.user.id).all()]
+    return render_template('exam_list.html', exams=exams, taken_exam_ids=taken_exam_ids)
+
+
 @app.route('/chat')
 @login_required
 def chat():
     return render_template('chat.html')
 
+
 @app.route('/chatbot', methods=['POST'])
 @login_required
 def chatbot():
-    from flask import request, jsonify
     user_input = request.json.get('message', '').strip()
 
     if not user_input:
         return jsonify({"reply": "Please type a message."})
 
     try:
-        # Use GPT API with new OpenAI client
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are SmartBot, a helpful AI tutor for Smart E-Learning. You assist students with exams, registration, and study guidance in a friendly, clear manner."},
+                {"role": "system", "content": "You are SmartBot, a helpful AI tutor for Smart E-Learning."},
                 {"role": "user", "content": user_input}
             ],
             max_tokens=250,
             temperature=0.7
         )
-
         bot_reply = response.choices[0].message.content.strip()
         return jsonify({"reply": bot_reply})
-
     except Exception as e:
         print("OpenAI API Error:", e)
-        return jsonify({"reply": "⚠️ Sorry, I'm having trouble connecting to SmartBot’s brain right now."})
-
-
+        return jsonify({"reply": "⚠️ Sorry, I'm having trouble connecting to SmartBot."})
 
 
 # ---------- Admin: Add Exam ----------
@@ -227,36 +232,40 @@ def add_exam():
 @admin_required
 def add_question(exam_id):
     exam = Exam.query.get_or_404(exam_id)
-    if request.method == 'POST':
-        q_text = request.form.get('question_text')
-        o1 = request.form.get('option1')
-        o2 = request.form.get('option2')
-        o3 = request.form.get('option3')
-        o4 = request.form.get('option4')
-        correct = request.form.get('correct_option')
 
-        if not all([q_text, o1, o2, o3, o4, correct]):
-            flash("Please fill all fields!", "warning")
+    if request.method == 'POST':
+        question_text = request.form['question_text'].strip()
+        option1 = request.form['option1'].strip()
+        option2 = request.form['option2'].strip()
+        option3 = request.form['option3'].strip()
+        option4 = request.form['option4'].strip()
+        correct_option = request.form['correct_option'].strip()
+
+        options = [option1, option2, option3, option4]
+        if correct_option not in options:
+            flash("❌ Correct Option must exactly match one of the four options.", "danger")
             return redirect(url_for('add_question', exam_id=exam.id))
 
-        q = Question(
+        new_question = Question(
             exam_id=exam.id,
-            question_text=q_text,
-            option1=o1,
-            option2=o2,
-            option3=o3,
-            option4=o4,
-            correct_option=correct
+            question_text=question_text,
+            option1=option1,
+            option2=option2,
+            option3=option3,
+            option4=option4,
+            correct_option=correct_option
         )
-        db.session.add(q)
+        db.session.add(new_question)
         db.session.commit()
-        flash("Question added successfully!", "success")
+
+        flash("✅ Question added successfully!", "success")
         return redirect(url_for('add_question', exam_id=exam.id))
 
     return render_template('add_question.html', exam=exam)
 
+
 @app.route('/delete_exam/<int:exam_id>', methods=['POST'])
-@admin_required  # make sure you have this decorator
+@admin_required
 def delete_exam(exam_id):
     exam = Exam.query.get_or_404(exam_id)
     Question.query.filter_by(exam_id=exam.id).delete()
@@ -264,8 +273,7 @@ def delete_exam(exam_id):
     db.session.delete(exam)
     db.session.commit()
     flash(f"Exam '{exam.title}' deleted successfully.", "success")
-    return redirect(url_for('home'))
-
+    return redirect(url_for('exam_list'))
 
 
 @app.route('/take_exam/<int:exam_id>', methods=['GET', 'POST'])
@@ -274,51 +282,92 @@ def take_exam(exam_id):
     exam = Exam.query.get_or_404(exam_id)
     questions = Question.query.filter_by(exam_id=exam.id).all()
 
+    existing_result = Result.query.filter_by(user_id=g.user.id, exam_id=exam.id).first()
+    if existing_result:
+        flash("⚠️ You have already taken this exam. You cannot retake it.", "warning")
+        return redirect(url_for('exam_list'))
+
     if request.method == 'POST':
         score = 0
         for q in questions:
             selected = request.form.get(str(q.id))
-            if selected == q.correct_option:
+            if selected and selected.strip().lower() == q.correct_option.strip().lower():
                 score += 1
 
-        # Save result
-        result = Result(user_id=g.user.id, exam_id=exam.id, score=score)
+        result = Result(
+            user_id=g.user.id,
+            exam_id=exam.id,
+            score=score,
+            date_taken=datetime.now()
+        )
         db.session.add(result)
         db.session.commit()
 
         session['last_score'] = score
         session['last_total'] = len(questions)
-        flash(f"You scored {score} out of {len(questions)}", "info")
+        flash(f"✅ Exam submitted! You scored {score} out of {len(questions)}.", "success")
         return redirect(url_for('result'))
 
     return render_template('exam.html', exam=exam, questions=questions)
 
 
-# Example result route (protected)
 @app.route('/result')
 @login_required
 def result():
-    # pass dummy score for now; later you'll compute real score
     score = session.get('last_score', None)
     return render_template('result.html', score=score if score is not None else 0)
 
 
-# Utility to create the DB (run manually once)
+# ---------- Admin: View Exam Participants ----------
+@app.route('/exam_participants/<int:exam_id>')
+@admin_required
+def exam_participants(exam_id):
+    exam = Exam.query.get_or_404(exam_id)
+    results = db.session.query(Result, User).join(User, Result.user_id == User.id).filter(Result.exam_id == exam.id).all()
+    total_participants = len(results)
+    avg_score = round(sum(r[0].score for r in results) / total_participants, 2) if total_participants else 0
+    return render_template(
+        'exam_participants.html',
+        exam=exam,
+        results=results,
+        total_participants=total_participants,
+        avg_score=avg_score
+    )
+
+
+# ---------- Admin: Delete All Participants ----------
+@app.route('/delete_participants/<int:exam_id>', methods=['POST'])
+@admin_required
+def delete_participants(exam_id):
+    exam = Exam.query.get_or_404(exam_id)
+    results = Result.query.filter_by(exam_id=exam.id).all()
+
+    if not results:
+        flash("⚠️ No participants found to delete.", "warning")
+        return redirect(url_for('exam_participants', exam_id=exam.id))
+
+    for r in results:
+        db.session.delete(r)
+    db.session.commit()
+
+    flash(f"🗑 All participants for '{exam.title}' have been deleted successfully.", "info")
+    return redirect(url_for('exam_participants', exam_id=exam.id))
+
+
+
+# ---------- CLI Utilities ----------
 @app.cli.command("init-db")
 def init_db():
-    """Initialize the database."""
     db.create_all()
     print("Initialized the database.")
 
+
 @app.cli.command("create-admin")
 def create_admin():
-    """Create a default admin user (Windows-friendly input)."""
-    
     fullname = input("Full Name: ")
     email = input("Email: ")
-    password = input("Password: ")  # 👈 Windows-friendly input
+    password = input("Password: ")
 
-    # Check if admin already exists
     existing = User.query.filter_by(email=email).first()
     if existing:
         print("Admin with this email already exists.")
@@ -329,8 +378,6 @@ def create_admin():
     db.session.add(admin)
     db.session.commit()
     print(f"Admin user '{fullname}' created successfully!")
-
-
 
 
 if __name__ == '__main__':
