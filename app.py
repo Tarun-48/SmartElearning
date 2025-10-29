@@ -124,7 +124,14 @@ def register():
         user = User(fullname=fullname, email=email)
         user.set_password(password)
         db.session.add(user)
-        db.session.commit()
+        
+        try:
+            db.session.commit()  # commit only if email unique
+        except Exception as e:
+            db.session.rollback()
+            flash("Email already registered. Please log in instead.", "warning")
+            return redirect(url_for('login'))
+
 
         flash("Registration successful. Please log in.", "success")
         return redirect(url_for('login'))
