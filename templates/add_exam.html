@@ -48,10 +48,9 @@
             <form method="POST" action="{{ url_for('add_exam') }}">
                 <label for="title">Exam Title:</label>
                 <input type="text" id="title" name="title" placeholder="Enter exam title" required>
-
                 <label for="description">Description (optional):</label>
                 <textarea id="description" name="description" placeholder="Enter short description..." rows="4"></textarea>
-
+                
                 <button type="submit" class="btn">Create Exam</button>
             </form>
         </div>

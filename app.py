@@ -9,6 +9,10 @@ from openai import OpenAI
 from datetime import datetime
 import csv
 from io import StringIO
+from flask import send_from_directory
+from werkzeug.utils import secure_filename
+
+
 
 # --- Load environment variables first ---
 load_dotenv()
@@ -69,6 +73,15 @@ class Result(db.Model):
     score = db.Column(db.Integer, nullable=False)
     date_taken = db.Column(db.DateTime, default=datetime.utcnow)
 
+class Note(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    filename = db.Column(db.String(200), nullable=False)
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    uploader = db.relationship('User', backref='notes_uploaded') 
+    upload_date = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 
 # ---------- helpers ----------
 def login_required(f):
@@ -97,6 +110,33 @@ def load_logged_in_user():
     if 'user_id' in session:
         g.user = User.query.get(session['user_id'])
 
+# ---------- Admin: Upload Notes ----------
+@app.route('/upload_notes', methods=['GET', 'POST'])
+@admin_required
+def upload_notes():
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        file = request.files.get('file')
+
+        if not title or not file:
+            flash("Please provide both a title and a file.", "danger")
+            return redirect(url_for('upload_notes'))
+
+        # Save file securely
+        filename = secure_filename(file.filename)
+        upload_path = os.path.join('uploads', filename)
+        file.save(upload_path)
+
+        new_note = Note(title=title, filename=filename, uploaded_by=g.user.id)
+        db.session.add(new_note)
+        db.session.commit()
+
+        flash("✅ Note uploaded successfully!", "success")
+        return redirect(url_for('view_notes'))
+
+    return render_template('upload_notes.html')
+
+
 
 # ---------- Routes ----------
 @app.route('/')
@@ -111,9 +151,20 @@ def register():
         fullname = request.form.get('fullname', '').strip()
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
+        confirm_password = request.form.get('confirm_password', '')
 
-        if not fullname or not email or not password:
-            flash("Please fill out all fields.", "danger")
+        if not fullname or not email or not password or not confirm_password:
+          flash("Please fill out all fields.", "danger")
+          return redirect(url_for('register'))
+
+        if password != confirm_password:
+            flash("❌ Passwords does not match. Please try again.", "danger")
+            return redirect(url_for('register'))
+        
+         # 🔹 NEW CHECK: Prevent registration with the same name (case-sensitive)
+        existing_name = User.query.filter_by(fullname=fullname).first()
+        if existing_name:
+            flash("⚠ A user with this name already exists. Please use a different name.", "warning")
             return redirect(url_for('register'))
 
         existing = User.query.filter_by(email=email).first()
@@ -211,7 +262,7 @@ def chatbot():
         return jsonify({"reply": bot_reply})
     except Exception as e:
         print("OpenAI API Error:", e)
-        return jsonify({"reply": "⚠️ Sorry, I'm having trouble connecting to SmartBot."})
+        return jsonify({"reply": "⚠ Sorry, I'm having trouble connecting to SmartBot."})
 
 
 # ---------- Admin: Add Exam ----------
@@ -221,6 +272,7 @@ def add_exam():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         desc = request.form.get('description', '').strip()
+        
         if not title:
             flash("Exam title is required.", "danger")
             return redirect(url_for('add_exam'))
@@ -291,7 +343,7 @@ def take_exam(exam_id):
 
     existing_result = Result.query.filter_by(user_id=g.user.id, exam_id=exam.id).first()
     if existing_result:
-        flash("⚠️ You have already taken this exam. You cannot retake it.", "warning")
+        flash("⚠ You have already taken this exam. You cannot retake it.", "warning")
         return redirect(url_for('exam_list'))
 
     if request.method == 'POST':
@@ -350,7 +402,7 @@ def delete_participants(exam_id):
     results = Result.query.filter_by(exam_id=exam.id).all()
 
     if not results:
-        flash("⚠️ No participants found to delete.", "warning")
+        flash("⚠ No participants found to delete.", "warning")
         return redirect(url_for('exam_participants', exam_id=exam.id))
 
     for r in results:
@@ -386,6 +438,35 @@ def create_admin():
     db.session.commit()
     print(f"Admin user '{fullname}' created successfully!")
 
+# ---------- View & Download Notes ----------
+@app.route('/view_notes')
+@login_required
+def view_notes():
+    notes = Note.query.order_by(Note.upload_date.desc()).all()
+    return render_template('view_notes.html', notes=notes)
+
+
+@app.route('/download/<filename>')
+@login_required
+def download_note(filename):
+    return send_from_directory('uploads', filename, as_attachment=True)
+
+# ---------- Admin: Delete Notes ----------
+@app.route('/delete_note/<int:note_id>', methods=['POST'])
+@admin_required
+def delete_note(note_id):
+    note = Note.query.get_or_404(note_id)
+    file_path = os.path.join('uploads', note.filename)
+
+    # Delete file if exists
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    # Delete record
+    db.session.delete(note)
+    db.session.commit()
+    flash(f"🗑 Note '{note.title}' deleted successfully.", "info")
+    return redirect(url_for('view_notes'))
 
 if __name__ == '__main__':
     app.run(debug=True)

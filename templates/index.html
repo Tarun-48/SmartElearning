@@ -102,7 +102,9 @@
             {% else %}
                 {% if g.user.is_admin %}
                     <a href="{{ url_for('add_exam') }}">Add Exams (Admin)</a>
+                    <a href="{{ url_for('upload_notes') }}">Upload Notes</a>
                 {% endif %}
+                <a href="{{ url_for('view_notes') }}">View Notes</a>
                 <a href="{{ url_for('logout') }}" class="logout">Logout</a>
             {% endif %}
 
