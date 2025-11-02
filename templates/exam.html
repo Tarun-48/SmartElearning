@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,7 +12,8 @@
 
     <!-- Timer Display -->
     <div id="timer" style="font-size: 22px; font-weight: bold; color: red;">
-        Time Remaining: <span id="time"></span>
+        Time Remaining: <span id="time">--:--</span>
+
     </div>
     <hr>
 
@@ -34,7 +34,7 @@
 
     <!-- ✅ Countdown Timer Script -->
     <script>
-        var duration = {{exam.duration}} * 60; // convert minutes to seconds
+        let duration = Number("{{ exam.duration }}") * 60; // Convert minutes to seconds
         
         function startTimer() {
             var timer = duration, minutes, seconds;
@@ -55,6 +55,19 @@
             }, 1000);
         }
         startTimer();
+    </script>
+
+    <script>
+    window.onbeforeunload = function (e){
+        e.preventDefault();
+        e.returnValue = "Your exam is still in progress. If you leave, exam will be submitted automatically.";
+    };
+    </script>
+
+    <script>
+    window.addEventListener("unload", function () {
+        document.getElementById("examForm").submit();
+    });
     </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 # app.py  
 from flask import Flask, render_template, request, redirect, url_for, flash, session, g, jsonify, make_response, Response
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import os
@@ -28,14 +29,20 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'change-this-to-a-random-secret-key'
-db_url = os.getenv("DATABASE_URL")
-if db_url and db_url.startswith("postgres://"):
+db_url = os.getenv("DATABASE_URL", "sqlite:///database.db")
+
+# Fix SSL issue on Render
+if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+migrate = Migrate(app, db)
+
 
 # ---------- Models ----------
 class User(db.Model):
@@ -278,11 +285,13 @@ def add_exam():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         desc = request.form.get('description', '').strip()
-        duration = request.form.get('duration')
+        duration = int(request.form.get('duration'))
         
         if not title or not duration:
             flash("Exam title and duration are required.", "danger")
-            return redirect(url_for('add_exam'))        
+            return redirect(url_for('add_exam'))
+        
+        duration = int(duration)        
         
 
         new_exam = Exam(title=title, description=desc, duration=duration)
