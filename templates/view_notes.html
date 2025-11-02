@@ -84,7 +84,6 @@
                 <th>Title</th>
                 <th>File</th>
                 <th>Uploaded By</th>
-                <th>Uploaded On</th>
                 {% if g.user.is_admin %}
                 <th>Actions</th>
                 {% endif %}
@@ -101,7 +100,6 @@
                     </a>
                 </td>
                 <td>{{ note.uploader.fullname if note.uploader else 'Unknown' }}</td>
-                <td>{{ note.uploaded_at.strftime('%Y-%m-%d %H:%M') if note.uploaded_at else '' }}</td>
                 {% if g.user.is_admin %}
                 <td>
                     <form action="{{ url_for('delete_note', note_id=note.id) }}" method="POST" style="display:inline;">
