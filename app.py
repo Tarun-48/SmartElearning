@@ -28,13 +28,14 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'change-this-to-a-random-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+db_url = os.getenv("DATABASE_URL")
+if db_url and db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://")
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
-
-with app.app_context():
-    db.create_all()
 
 # ---------- Models ----------
 class User(db.Model):
@@ -83,6 +84,16 @@ class Note(db.Model):
     uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     uploader = db.relationship('User', backref='notes_uploaded') 
     upload_date = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+# ✅ Create tables when app loads (for Render)
+with app.app_context():
+    try:
+        db.create_all()
+        print("✅ Tables created successfully")
+    except Exception as e:
+        print("❌ Error creating tables:", e)
+
 
 
 
