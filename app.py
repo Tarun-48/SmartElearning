@@ -56,6 +56,7 @@ class Exam(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     description = db.Column(db.String(300))
+    duration = db.Column(db.Integer, nullable=False, default=30)  # minutes
     questions = db.relationship('Question', backref='exam', lazy=True)
 
 
@@ -277,12 +278,14 @@ def add_exam():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         desc = request.form.get('description', '').strip()
+        duration = request.form.get('duration')
         
-        if not title:
-            flash("Exam title is required.", "danger")
-            return redirect(url_for('add_exam'))
+        if not title or not duration:
+            flash("Exam title and duration are required.", "danger")
+            return redirect(url_for('add_exam'))        
+        
 
-        new_exam = Exam(title=title, description=desc)
+        new_exam = Exam(title=title, description=desc, duration=duration)
         db.session.add(new_exam)
         db.session.commit()
         flash("Exam added successfully! Now add questions.", "success")
@@ -472,6 +475,12 @@ def delete_note(note_id):
     db.session.commit()
     flash(f"🗑 Note '{note.title}' deleted successfully.", "info")
     return redirect(url_for('view_notes'))
+
+@app.route('/update_db')
+def update_db():
+    db.create_all()
+    return "Database Updated ✅"
+
 
 
 if __name__ == '__main__':

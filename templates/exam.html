@@ -10,8 +10,14 @@
 <body>
     <h2>{{ exam.title }}</h2>
     <p>{{ exam.description }}</p>
-    
-    <form method="POST">
+
+    <!-- Timer Display -->
+    <div id="timer" style="font-size: 22px; font-weight: bold; color: red;">
+        Time Remaining: <span id="time"></span>
+    </div>
+    <hr>
+
+    <form id="examForm" method="POST">
         {% for q in questions %}
             <p><b>{{ loop.index }}. {{ q.question_text }}</b></p>
             <input type="radio" name="{{ q.id }}" value="{{ q.option1 }}"> {{ q.option1 }}<br>
@@ -25,7 +31,30 @@
     <footer>
         <p>Good luck! You can review your results afterward.</p>
     </footer>
-    
 
+    <!-- ✅ Countdown Timer Script -->
+    <script>
+        var duration = {{exam.duration}} * 60; // convert minutes to seconds
+        
+        function startTimer() {
+            var timer = duration, minutes, seconds;
+            var display = document.getElementById("time");
+
+            var countdown = setInterval(function () {
+                minutes = Math.floor(timer / 60);
+                seconds = timer % 60;
+
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+                display.textContent = minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    clearInterval(countdown);
+                    alert("Time is up! Your exam will be submitted.");
+                    document.getElementById("examForm").submit();
+                }
+            }, 1000);
+        }
+        startTimer();
+    </script>
 </body>
 </html>
