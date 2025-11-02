@@ -473,5 +473,29 @@ def delete_note(note_id):
     flash(f"🗑 Note '{note.title}' deleted successfully.", "info")
     return redirect(url_for('view_notes'))
 
+
+@app.route('/create_admin_once')
+def create_admin_once():
+    from werkzeug.security import generate_password_hash
+    
+    # change credentials if you want
+    fullname = "Admin"
+    email = "admin@example.com"
+    password = "admin123"
+
+    # check if admin exists
+    existing = User.query.filter_by(email=email).first()
+    if existing:
+        return "Admin already exists ✅"
+
+    admin = User(fullname=fullname, email=email, is_admin=True)
+    admin.set_password(password)
+
+    db.session.add(admin)
+    db.session.commit()
+
+    return "✅ Admin created successfully!"
+
+
 if __name__ == '__main__':
     app.run(debug=True)
